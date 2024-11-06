@@ -8,14 +8,17 @@ datasource db {
 }
 
 model Facility {
-  businessId    String @id
-  owner         String
+  businessId    String
+  serialNumber  String
+  name          String
   cityCode      String
   cityName      String
   localCode     String
   localName     String
-  name          String
-  phone         String
   address       String
-  detailAddress String
+  detailAddress String?
+  owner         String
+  phone         String?
+
+  @@id([businessId, serialNumber])
 }
