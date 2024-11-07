@@ -39,36 +39,33 @@ export class FacilityService {
       const data = (await response.json()) as FacilityResponse;
       const items = data.response.body.items.item;
 
-      const facilities = await Promise.all(
-        items.map(async (item) => {
-          if (item.city_cd === '45') {
-            item.city_cd = '52';
-            if (item.local_cd.substring(0, 2) === '45') {
-              item.local_cd = '52' + item.local_cd.substring(2);
-            }
-          } else if (item.city_cd === '42') {
-            item.city_cd = '51';
-            if (item.local_cd.substring(0, 2) === '42') {
-              item.local_cd = '51' + item.local_cd.substring(2);
-            }
+      const facilities = items.map((item) => {
+        if (item.city_cd === '45') {
+          item.city_cd = '52';
+          if (item.local_cd.substring(0, 2) === '45') {
+            item.local_cd = '52' + item.local_cd.substring(2);
           }
+        } else if (item.city_cd === '42') {
+          item.city_cd = '51';
+          if (item.local_cd.substring(0, 2) === '42') {
+            item.local_cd = '51' + item.local_cd.substring(2);
+          }
+        }
 
-          return {
-            businessId: item.brno,
-            serialNumber: item.facil_sn,
-            owner: item.pres_nm,
-            cityCode: item.city_cd,
-            cityName: item.city_nm,
-            localCode: item.local_cd,
-            localName: item.local_nm,
-            name: item.facil_nm,
-            phone: item.res_telno || null,
-            address: item.road_addr,
-            detailAddress: item.faci_daddr || null,
-          };
-        })
-      );
-
+        return {
+          businessId: item.brno,
+          serialNumber: item.facil_sn,
+          owner: item.pres_nm,
+          cityCode: item.city_cd,
+          cityName: item.city_nm,
+          localCode: item.local_cd,
+          localName: item.local_nm,
+          name: item.facil_nm,
+          phone: item.res_telno || null,
+          address: item.road_addr,
+          detailAddress: item.faci_daddr || null,
+        };
+      });
       await this.prisma.facility.createMany({
         data: facilities,
       });

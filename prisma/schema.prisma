@@ -22,3 +22,19 @@ model Facility {
 
   @@id([businessId, serialNumber])
 }
+
+model Course {
+  businessId           String
+  facilitySerialNumber String
+  courseId             String
+  courseName           String
+  itemCode             String
+  itemName             String
+  instructor           String?
+  startTime            String
+  endTime              String
+  workday              String
+  price                Int
+
+  @@id([businessId, courseId])
+}
