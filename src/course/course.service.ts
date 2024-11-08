@@ -21,6 +21,7 @@ export class CourseService {
     const response = await fetch(this.url + param);
     const data = (await response.json()) as CourseResponse;
     const totalCount = data.response.body.totalCount;
+
     return Math.floor((totalCount - 1) / 1000) + 1;
   }
 
@@ -35,8 +36,14 @@ export class CourseService {
         `&numOfRows=1000` +
         `&resultType=json`;
 
+      let data;
       const response = await fetch(this.url + param);
-      const data = (await response.json()) as CourseResponse;
+      try {
+        data = (await response.json()) as CourseResponse;
+      } catch (error) {
+        console.log(i + '번째 데이터 안됨');
+        continue;
+      }
       const items = data.response.body.items.item;
 
       const courses = items.map((item) => {
