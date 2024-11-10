@@ -38,3 +38,16 @@ model Course {
 
   @@id([businessId, courseId])
 }
+
+model SpecialCourse {
+  businessId String
+  courseId   String
+  courseName String
+  itemName   String
+  startTime  String
+  endTime    String
+  workday    String
+  price      Int
+
+  @@id([businessId, courseId])
+}
