@@ -48,6 +48,7 @@ model SpecialCourse {
   endTime    String
   workday    String
   price      Int
+  type       String
 
   @@id([businessId, courseId])
 }

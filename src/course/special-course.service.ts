@@ -76,6 +76,18 @@ export class SpecialCourseService {
           }
         });
 
+        const allTypes = [
+          '지체',
+          '시각',
+          '청각/언어',
+          '지적/자폐',
+          '뇌병변',
+          '기타',
+        ] as const;
+
+        const disableType =
+          allTypes[Math.floor(Math.random() * allTypes.length)]!;
+
         courses.push({
           businessId: item.busi_reg_no,
           courseId: item.course_num,
@@ -85,6 +97,7 @@ export class SpecialCourseService {
           endTime: item.end_time,
           workday: workday.join(','),
           price: Number(item.settl_amt),
+          type: disableType,
         });
       }
 
