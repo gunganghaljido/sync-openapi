@@ -39,7 +39,9 @@ export class FacilityService {
       const data = (await response.json()) as FacilityResponse;
       const items = data.response.body.items.item;
 
-      const facilities = items.map((item) => {
+      const facilities = [];
+
+      for (const item of items) {
         if (item.city_cd === '45') {
           item.city_cd = '52';
           if (item.local_cd.substring(0, 2) === '45') {
@@ -52,7 +54,11 @@ export class FacilityService {
           }
         }
 
-        return {
+        if (item.brno === '2249423200') {
+          continue;
+        }
+
+        facilities.push({
           businessId: item.brno,
           serialNumber: item.facil_sn,
           owner: item.pres_nm,
@@ -64,8 +70,8 @@ export class FacilityService {
           phone: item.res_telno || null,
           address: item.road_addr,
           detailAddress: item.faci_daddr || null,
-        };
-      });
+        });
+      }
       await this.prisma.facility.createMany({
         data: facilities,
       });
