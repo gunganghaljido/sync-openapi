@@ -3,10 +3,11 @@ import { PrismaClient } from '@prisma/client';
 import { FacilityService } from './facility/facility.service';
 import { CourseService } from './course/course.service';
 import { SpecialCourseService } from './course/special-course.service';
+import { Handler } from 'aws-lambda';
 
 dotenv.config();
 
-async function main() {
+export const handler: Handler = async () => {
   const prisma = new PrismaClient();
 
   const facilityService = new FacilityService(prisma);
@@ -18,6 +19,4 @@ async function main() {
     courseService.saveAllCourse(),
     specialCourseService.saveAllCourse(),
   ]);
-}
-
-main();
+};
