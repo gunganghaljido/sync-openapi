@@ -17,3 +17,8 @@ export const handler: Handler = async () => {
     specialCourseService.saveAllCourse(),
   ]);
 };
+
+handler('event', 'context' as any, (error, result) => {
+  console.log('error:', error);
+  console.log('result:', result);
+});
