@@ -1,14 +1,14 @@
-import type { PrismaClient } from '@prisma/client';
+import type { Database } from 'src/db/database';
 
 export class SpecialCourseService {
   key: string;
   url: string;
-  prisma: PrismaClient;
-  constructor(prisma: PrismaClient) {
+  db: Database;
+  constructor(db: Database) {
     this.key = process.env.KEY!;
     this.url =
       'http://apis.data.go.kr/B551014/SRVC_DVOUCHER_FACI_COURSE/TODZ_DVOUCHER_FACI_COURSE';
-    this.prisma = prisma;
+    this.db = db;
   }
 
   async getLoopCount() {
@@ -27,7 +27,7 @@ export class SpecialCourseService {
   }
 
   async saveAllCourse() {
-    await this.prisma.specialCourse.deleteMany();
+    await this.db.deleteFrom('SpecialCourse').execute();
     const loopCount = await this.getLoopCount();
 
     for (let i = 1; i <= loopCount; i++) {
@@ -101,9 +101,7 @@ export class SpecialCourseService {
         });
       }
 
-      await this.prisma.specialCourse.createMany({
-        data: courses,
-      });
+      await this.db.insertInto('SpecialCourse').values(courses).execute();
     }
   }
 }

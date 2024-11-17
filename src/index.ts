@@ -1,18 +1,15 @@
 import * as dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+dotenv.config();
 import { FacilityService } from './facility/facility.service';
 import { CourseService } from './course/course.service';
 import { SpecialCourseService } from './course/special-course.service';
+import { db } from './db/database';
 import { Handler } from 'aws-lambda';
 
-dotenv.config();
-
 export const handler: Handler = async () => {
-  const prisma = new PrismaClient();
-
-  const facilityService = new FacilityService(prisma);
-  const courseService = new CourseService(prisma);
-  const specialCourseService = new SpecialCourseService(prisma);
+  const facilityService = new FacilityService(db);
+  const courseService = new CourseService(db);
+  const specialCourseService = new SpecialCourseService(db);
 
   await Promise.all([
     facilityService.saveAllFacility(),

@@ -1,14 +1,14 @@
-import { PrismaClient } from '@prisma/client';
+import type { Database } from 'src/db/database';
 
 export class FacilityService {
   key: string;
   url: string;
-  prisma: PrismaClient;
-  constructor(prisma: PrismaClient) {
+  db: Database;
+  constructor(db: Database) {
     this.key = process.env.KEY!;
     this.url =
       'http://apis.data.go.kr/B551014/SRVC_OD_API_FACIL_MNG/todz_api_facil_mng_i';
-    this.prisma = prisma;
+    this.db = db;
   }
 
   async getLoopCount() {
@@ -25,7 +25,7 @@ export class FacilityService {
   }
 
   async saveAllFacility() {
-    await this.prisma.facility.deleteMany();
+    await this.db.deleteFrom('Facility').execute();
     const loopCount = await this.getLoopCount();
 
     for (let i = 1; i <= loopCount; i++) {
@@ -72,9 +72,8 @@ export class FacilityService {
           detailAddress: item.faci_daddr || null,
         });
       }
-      await this.prisma.facility.createMany({
-        data: facilities,
-      });
+
+      await this.db.insertInto('Facility').values(facilities).execute();
     }
   }
 

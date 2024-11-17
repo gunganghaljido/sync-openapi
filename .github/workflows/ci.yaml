@@ -22,7 +22,6 @@ jobs:
           npm install
           npx tsc -p tsconfig.json
           npm install --omit=dev
-          npx prisma generate
           mv node_modules dist/
           cd dist
           zip -r ../dist.zip .
