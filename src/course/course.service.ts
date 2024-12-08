@@ -1,4 +1,6 @@
 import type { Database } from 'src/db/database';
+import { sql } from 'kysely';
+import { v4 as uuidv4 } from 'uuid';
 
 export class CourseService {
   key: string;
@@ -26,6 +28,21 @@ export class CourseService {
   }
 
   async saveAllCourse() {
+    await this.db.deleteFrom('NormalPreviousCourse').execute();
+    await this.db.executeQuery(
+      sql`
+      insert into "NormalPreviousCourse"("businessId", "serialNumber", "count")
+      SELECT 
+        "businessId", 
+        "facilitySerialNumber", 
+        count(*) as "count"
+      FROM "Course"
+      GROUP BY 
+        "businessId", 
+        "facilitySerialNumber";
+      `.compile(this.db)
+    );
+
     await this.db.deleteFrom('Course').execute();
     const loopCount = await this.getLoopCount();
 
@@ -102,6 +119,74 @@ export class CourseService {
       });
 
       await this.db.insertInto('Course').values(courses).execute();
+    }
+
+    const afterResult = await this.db.executeQuery(
+      sql<{ businessId: string; serialNumber: string }>`
+        select
+          a."businessId",
+          a."facilitySerialNumber" as "serialNumber"
+        from
+          (select
+            "businessId",
+            "facilitySerialNumber",
+            count(*) as "count"
+          from "Course"
+          group by
+            "businessId",
+            "facilitySerialNumber") as a
+        left join "NormalPreviousCourse" as b
+        on a."businessId" = b."businessId" and a."facilitySerialNumber" = b."serialNumber"
+        where a."count" != b."count" or b."count" is null;
+      `.compile(this.db)
+    );
+
+    for await (const facility of afterResult.rows) {
+      const [facilityName, courseNames, users] = await Promise.all([
+        this.db
+          .selectFrom('Facility')
+          .select('name')
+          .where('businessId', '=', facility.businessId)
+          .where('serialNumber', '=', facility.serialNumber)
+          .execute(),
+        this.db
+          .selectFrom('Course')
+          .select('courseName')
+          .where('businessId', '=', facility.businessId)
+          .where('facilitySerialNumber', '=', facility.serialNumber)
+          .execute(),
+        this.db
+          .selectFrom('NormalFavorite')
+          .select('userId')
+          .where('businessId', '=', facility.businessId)
+          .where('serialNumber', '=', facility.serialNumber)
+          .execute(),
+      ]);
+
+      if (
+        facilityName.length === 0 ||
+        facilityName[0] === undefined ||
+        courseNames.length === 0 ||
+        users.length === 0
+      ) {
+        continue;
+      }
+
+      for await (const user of users) {
+        await this.db
+          .insertInto('Notification')
+          .values([
+            {
+              id: uuidv4(),
+              userId: user.userId,
+              businessId: facility.businessId,
+              serialNumber: facility.serialNumber,
+              facilityName: facilityName[0].name,
+              courseNames: courseNames.map((course) => course.courseName),
+            },
+          ])
+          .execute();
+      }
     }
   }
 }

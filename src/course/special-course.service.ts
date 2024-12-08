@@ -1,4 +1,6 @@
 import type { Database } from 'src/db/database';
+import { sql } from 'kysely';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SpecialCourseService {
   key: string;
@@ -27,6 +29,19 @@ export class SpecialCourseService {
   }
 
   async saveAllCourse() {
+    await this.db.deleteFrom('SpecialPreviousCourse').execute();
+    await this.db.executeQuery(
+      sql`
+      insert into "SpecialPreviousCourse"("businessId", "count")
+      SELECT 
+        "businessId",
+        count(*) as "count"
+      FROM "SpecialCourse"
+      GROUP BY 
+        "businessId"
+      `.compile(this.db)
+    );
+
     await this.db.deleteFrom('SpecialCourse').execute();
     const loopCount = await this.getLoopCount();
 
@@ -102,6 +117,67 @@ export class SpecialCourseService {
       }
 
       await this.db.insertInto('SpecialCourse').values(courses).execute();
+    }
+
+    const afterResult = await this.db.executeQuery(
+      sql<{ businessId: string }>`
+        select
+          a."businessId"
+        from
+          (select
+            "businessId",
+            count(*) as "count"
+          from "SpecialCourse"
+          group by
+            "businessId") as a
+        left join "SpecialPreviousCourse" as b
+        on a."businessId" = b."businessId"
+        where a."count" != b."count" or b."count" is null;
+      `.compile(this.db)
+    );
+
+    for await (const facility of afterResult.rows) {
+      const [facilityName, courseNames, users] = await Promise.all([
+        this.db
+          .selectFrom('SpecialFacility')
+          .select('name')
+          .where('businessId', '=', facility.businessId)
+          .execute(),
+        this.db
+          .selectFrom('SpecialCourse')
+          .select('courseName')
+          .where('businessId', '=', facility.businessId)
+          .execute(),
+        this.db
+          .selectFrom('SpecialFavorite')
+          .select('userId')
+          .where('businessId', '=', facility.businessId)
+          .execute(),
+      ]);
+
+      if (
+        facilityName.length === 0 ||
+        facilityName[0] === undefined ||
+        courseNames.length === 0 ||
+        users.length === 0
+      ) {
+        continue;
+      }
+
+      for await (const user of users) {
+        await this.db
+          .insertInto('Notification')
+          .values([
+            {
+              id: uuidv4(),
+              userId: user.userId,
+              businessId: facility.businessId,
+              facilityName: facilityName[0].name,
+              courseNames: courseNames.map((course) => course.courseName),
+            },
+          ])
+          .execute();
+      }
     }
   }
 }

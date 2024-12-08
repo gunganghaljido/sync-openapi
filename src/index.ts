@@ -11,9 +11,11 @@ export const handler: Handler = async () => {
   const courseService = new CourseService(db);
   const specialCourseService = new SpecialCourseService(db);
 
+  await facilityService.saveAllFacility();
   await Promise.all([
-    facilityService.saveAllFacility(),
     courseService.saveAllCourse(),
     specialCourseService.saveAllCourse(),
   ]);
 };
+
+// handler('' as any, {} as any, () => {});

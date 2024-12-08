@@ -9,6 +9,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id
+  email     String   @unique
+  nickname  String
+  createdAt DateTime @default(now())
+
+  NormalFavorite  NormalFavorite[]
+  SpecialFavorite SpecialFavorite[]
+  Notification    Notification[]
+  Review          Review[]
+}
+
+model NormalFavorite {
+  userId       String
+  businessId   String
+  serialNumber String
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, businessId, serialNumber])
+}
+
+model SpecialFavorite {
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, businessId])
+}
+
+model Notification {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String
+  businessId   String
+  serialNumber String?
+  facilityName String
+  courseNames  String[]
+  isViewed     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String
+  businessId   String
+  serialNumber String?
+  score        Float
+  content      String
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Facility {
   businessId    String
   serialNumber  String
@@ -41,6 +99,35 @@ model Course {
   @@id([businessId, courseId])
 }
 
+model CourseHistory {
+  businessId       String
+  facilityName     String
+  itemCode         String
+  itemName         String
+  address          String
+  detailAddress    String?
+  courseName       String
+  courseId         String
+  startDate        DateTime @db.Date
+  endDate          DateTime @db.Date
+  participantCount Int
+  price            Int
+
+  @@id([courseId, startDate])
+}
+
+model SpecialFacility {
+  businessId    String  @id
+  name          String
+  cityCode      String
+  cityName      String
+  localCode     String
+  localName     String
+  address       String
+  detailAddress String?
+  phone         String?
+}
+
 model SpecialCourse {
   businessId String
   courseId   String
@@ -53,4 +140,41 @@ model SpecialCourse {
   type       String
 
   @@id([businessId, courseId])
+}
+
+model SpecialCourseHistory {
+  businessId       String
+  facilityName     String
+  itemCode         String
+  itemName         String
+  address          String
+  detailAddress    String?
+  courseName       String
+  courseId         String
+  startDate        DateTime @db.Date
+  endDate          DateTime @db.Date
+  participantCount Int
+  price            Int
+  cityCode         String
+  cityName         String
+  localCode        String
+  localName        String
+  phone            String?
+
+  @@id([businessId, courseId, startDate])
+}
+
+model NormalPreviousCourse {
+  businessId   String
+  serialNumber String
+  count        Int
+
+  @@id([businessId, serialNumber])
+}
+
+model SpecialPreviousCourse {
+  businessId String
+  count      Int
+
+  @@id([businessId])
 }
